@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청소 당번 사다리타기</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:   #1B2E6B;
+  --navy2:  #243891;
+  --cream:  #F6F5EE;
+  --card:   #FFFFFF;
+  --gold:   #F5A623;
+  --gold2:  #FFF3D4;
+  --red:    #E53E3E;
+  --gray:   #94A3B8;
+  --border: #E2E8F0;
+  --text:   #1A202C;
+  --muted:  #718096;
+  --r:      14px;
+}
+
+body {
+  font-family: 'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕','NanumGothic',sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+header {
+  background: var(--navy);
+  color: #fff;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+header h1 { font-size: 21px; font-weight: 800; letter-spacing: -.5px; }
+header .sub { font-size: 13px; opacity: .55; font-weight: 400; }
+
+/* ── Screens ── */
+.screen { display: none; max-width: 1080px; margin: 0 auto; padding: 32px 24px 56px; }
+.screen.active { display: block; }
+
+/* ── Screen 1 ── */
+.s1-top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 22px; gap: 16px; flex-wrap: wrap;
+}
+.s1-top h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.s1-top p  { font-size: 14px; color: var(--muted); }
+
+.chip {
+  background: var(--navy); color: #fff;
+  padding: 10px 22px; border-radius: 30px;
+  font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px; white-space: nowrap;
+}
+.chip .big { font-size: 22px; }
+
+.s-grid {
+  display: grid; grid-template-columns: repeat(6,1fr);
+  gap: 10px; margin-bottom: 24px;
+}
+.sc {
+  position: relative; background: var(--card);
+  border: 2px solid var(--border); border-radius: var(--r);
+  padding: 20px 10px 16px; text-align: center;
+  cursor: pointer; font-size: 17px; font-weight: 700;
+  transition: border-color .15s, background .15s, transform .1s;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  user-select: none;
+}
+.sc:hover:not(.ex) { border-color: var(--navy2); transform: translateY(-2px); }
+.sc.ex {
+  background: #F7FAFC; border-color: #E2E8F0;
+  color: var(--gray); text-decoration: line-through;
+  transform: none; box-shadow: none;
+}
+.sc .xb {
+  display: none; position: absolute; top: -9px; right: -9px;
+  background: var(--red); color: #fff;
+  font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px;
+}
+.sc.ex .xb { display: block; }
+
+.warn-row { text-align: center; min-height: 26px; margin-bottom: 8px; }
+.warn-row span { color: var(--red); font-size: 14px; font-weight: 600; }
+.duty-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 14px; margin-bottom: 20px;
+}
+.duty-label { font-size: 15px; font-weight: 700; color: var(--muted); }
+.duty-btns  { display: flex; gap: 8px; }
+.duty-btn {
+  padding: 9px 20px; border-radius: 30px;
+  border: 2px solid var(--border); background: var(--card);
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  cursor: pointer; color: var(--muted); transition: all .15s;
+}
+.duty-btn:hover  { border-color: var(--navy); color: var(--navy); }
+.duty-btn.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+/* ── Screen 2 ── */
+.s2-top {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+}
+.s2-top h2 { font-size: 20px; font-weight: 700; }
+.s2-top p  { font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.6; }
+.s2-btns   { display: flex; gap: 10px; }
+
+.canvas-box {
+  background: var(--card); border-radius: var(--r);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.09);
+  overflow: hidden; margin-bottom: 18px;
+}
+canvas { display: block; width: 100%; }
+
+.act-btns {
+  display: flex; gap: 10px; justify-content: center;
+  flex-wrap: wrap; margin-bottom: 20px;
+}
+
+/* ── Result ── */
+.result {
+  display: none; background: var(--card); border-radius: var(--r);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.09);
+  padding: 32px 24px; text-align: center;
+  border-top: 4px solid var(--gold);
+}
+.result h3   { font-size: 20px; font-weight: 800; color: var(--navy); margin-bottom: 22px; }
+.w-row       { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.wc {
+  background: var(--gold2); border: 2.5px solid var(--gold);
+  border-radius: 14px; padding: 18px 36px;
+  font-size: 24px; font-weight: 800; color: #7B4700;
+  animation: pop .45s cubic-bezier(.34,1.56,.64,1) both;
+}
+.wc:nth-child(1){animation-delay:.05s}
+.wc:nth-child(2){animation-delay:.15s}
+.wc:nth-child(3){animation-delay:.25s}
+.wc:nth-child(4){animation-delay:.35s}
+@keyframes pop {
+  from { transform: scale(.4); opacity: 0; }
+  to   { transform: scale(1);  opacity: 1; }
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 14px 28px; border: 2px solid transparent;
+  border-radius: 12px; font-family: inherit;
+  font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.btn:active { transform: scale(.96); }
+.btn-primary { background: var(--navy); color: #fff; box-shadow: 0 4px 14px rgba(27,46,107,.28); }
+.btn-primary:hover { background: var(--navy2); }
+.btn-primary:disabled { background: var(--gray); box-shadow: none; cursor: not-allowed; transform: none; }
+.btn-gold { background: var(--gold); color: #fff; box-shadow: 0 4px 14px rgba(245,166,35,.35); }
+.btn-gold:hover { background: #DE9415; }
+.btn-gold:disabled { background: var(--gray); box-shadow: none; cursor: not-allowed; transform: none; }
+.btn-ghost { background: var(--card); color: var(--text); border-color: var(--border); }
+.btn-ghost:hover { background: var(--cream); }
+.btn-ghost:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+@media (max-width: 639px) {
+  header { height: 50px; padding: 0 14px; }
+  header h1 { font-size: 15px; }
+  header .sub { display: none; }
+  .screen { padding: 14px 10px 36px; }
+  .s-grid { grid-template-columns: repeat(3,1fr); gap: 7px; }
+  .sc { padding: 12px 6px 10px; font-size: 14px; }
+  .s1-top { flex-direction: column; gap: 10px; }
+  .chip .big { font-size: 18px; }
+  .s2-top { flex-direction: column; align-items: flex-start; }
+  .s2-btns { display: flex; width: 100%; }
+  .s2-btns .btn { flex: 1; justify-content: center; padding: 10px 8px; font-size: 14px; }
+  .act-btns .btn { flex: 1; padding: 11px 8px; font-size: 14px; }
+  .wc { padding: 11px 18px; font-size: 17px; }
+  .result h3 { font-size: 17px; }
+  .duty-btn { padding: 8px 14px; font-size: 14px; }
+  .ctrl .btn { flex: 1; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧹 청소 당번 사다리타기</h1>
+  <span class="sub">매일 4명 당첨 · 전자칠판용</span>
+</header>
+
+<!-- ===== SCREEN 1 ===== -->
+<div class="screen active" id="s1">
+  <div class="s1-top">
+    <div>
+      <h2>참여 학생 선택</h2>
+      <p>제외할 학생 이름표를 클릭하세요. 나머지 학생만 사다리에 참여합니다.</p>
+    </div>
+    <div class="chip">참여 인원 <span class="big" id="cnt">12</span>명</div>
+  </div>
+  <div class="s-grid" id="grid"></div>
+  <div class="warn-row"><span id="w1"></span></div>
+  <div class="duty-row">
+    <span class="duty-label">당번 인원</span>
+    <div class="duty-btns" id="duty-btns">
+      <button class="duty-btn" onclick="setDuty(1)">1명</button>
+      <button class="duty-btn" onclick="setDuty(2)">2명</button>
+      <button class="duty-btn" onclick="setDuty(3)">3명</button>
+      <button class="duty-btn active" onclick="setDuty(4)">4명</button>
+    </div>
+  </div>
+  <div class="ctrl">
+    <button class="btn btn-ghost" onclick="resetAll()">↺ 초기화</button>
+    <button class="btn btn-primary" id="btn-go" onclick="goLadder()">사다리 만들기 →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2 ===== -->
+<div class="screen" id="s2">
+  <div class="s2-top">
+    <div>
+      <h2>사다리타기</h2>
+      <p id="ptxt"></p>
+    </div>
+    <div class="s2-btns">
+      <button class="btn btn-ghost" onclick="goBack()">← 이전으로</button>
+      <button class="btn btn-ghost" id="btn-re" onclick="redraw()">↺ 다시 뽑기</button>
+    </div>
+  </div>
+  <div class="canvas-box"><canvas id="lc"></canvas></div>
+  <div class="act-btns">
+    <button class="btn btn-primary" id="btn-anim" onclick="runAnim()">▶ 시작</button>
+    <button class="btn btn-gold"    id="btn-now"  onclick="showNow()">⚡ 결과만 보기</button>
+  </div>
+  <div class="result" id="result">
+    <h3>🎉 오늘의 청소 당번</h3>
+    <div class="w-row" id="wrow"></div>
+
+  </div>
+</div>
+
+<script>
+// ============================================================
+// ★ 학생 이름 — 이 배열만 수정하면 됩니다
+// ============================================================
+const STUDENTS = [
+  "김위빈", "한성호", "박태경", "고서빈",
+  "신현성", "김예찬", "이소울", "김동우",
+  "신태준", "송은우", "조재우", "강희돈"
+];
+
+let DUTY = 4;  // 당번 인원 (UI에서 변경 가능)
+const ROWS    = 24;   // 사다리 높이(가로줄 레벨 수)
+const BPROB   = 0.19; // 가로줄 생성 확률
+const SPEED   = 0.022; // 애니메이션 속도
+const DELAY   = 3;    // 학생 간 시작 딜레이 (프레임)
+const PAD_X   = 54;   // 사다리 좌우 여백 (px)
+const TOP_Y   = 66;   // 위쪽 이름 라벨 중심 Y (px)
+
+// 당번 경로 색상 — 빨주노초파남보 순서
+const RAINBOW = ['#FF3B30','#FF9500','#FFCC00','#34C759','#007AFF','#5856D6','#AF52DE'];
+
+// ============================================================
+// 상태
+// ============================================================
+let excluded  = new Set();
+let parts     = [];       // 참여 학생 인덱스 배열
+let bars      = [];       // bars[r][c] = true → c~c+1 사이 가로줄
+let pathMaps  = [];       // pathMaps[i][0..ROWS] = 학생 i의 컬럼 경로
+let dutySlots = new Set();// 당번 도착 슬롯 인덱스
+let winnerColorMap = {}; // 학생 인덱스 → 무지개 색상
+let animating = false;
+
+const canvas  = document.getElementById('lc');
+const ctx     = canvas.getContext('2d');
+
+// ============================================================
+// 초기화 — 학생 카드 생성
+// ============================================================
+function init() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  STUDENTS.forEach((name, i) => {
+    const d = document.createElement('div');
+    d.className = 'sc'; d.id = `sc${i}`;
+    d.innerHTML = `${name}<span class="xb">제외</span>`;
+    d.onclick = () => toggle(i);
+    grid.appendChild(d);
+  });
+  syncUI();
+}
+
+function setDuty(n) {
+  DUTY = n;
+  document.querySelectorAll('.duty-btn').forEach((b, i) => {
+    b.classList.toggle('active', i + 1 === n);
+  });
+  syncUI();
+}
+
+function toggle(i) {
+  excluded.has(i) ? excluded.delete(i) : excluded.add(i);
+  document.getElementById(`sc${i}`).classList.toggle('ex', excluded.has(i));
+  syncUI();
+}
+
+function syncUI() {
+  const cnt = STUDENTS.length - excluded.size;
+  document.getElementById('cnt').textContent = cnt;
+  const warn = document.getElementById('w1');
+  const go   = document.getElementById('btn-go');
+  if (cnt < DUTY) {
+    warn.textContent = `⚠ 최소 ${DUTY}명 이상 남아 있어야 합니다.`;
+    go.disabled = true;
+  } else {
+    warn.textContent = '';
+    go.disabled = false;
+  }
+}
+
+function resetAll() {
+  excluded.clear();
+  document.querySelectorAll('.sc').forEach(c => c.classList.remove('ex'));
+  syncUI();
+}
+
+// ============================================================
+// 화면 전환
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goBack() {
+  if (!animating) {
+    document.body.style.overflow = '';
+    showScreen('s1');
+  }
+}
+
+// ============================================================
+// 사다리 진입
+// ============================================================
+function goLadder() {
+  parts = [];
+  for (let i = 0; i < STUDENTS.length; i++) {
+    if (!excluded.has(i)) parts.push(i);
+  }
+  build();
+  document.getElementById('ptxt').textContent =
+    `참여: ${parts.map(i => STUDENTS[i]).join(' · ')}`;
+  const res = document.getElementById('result');
+  res.style.display = 'none';
+  res.classList.remove('show');
+  showScreen('s2');
+  window.scrollTo(0, 0);
+  document.body.style.overflow = 'hidden';
+  resetBtns();
+  drawStatic(false, new Set());
+}
+
+function redraw() {
+  if (animating) return;
+  build();
+  resetBtns();
+  const res = document.getElementById('result');
+  res.style.display = 'none';
+  res.classList.remove('show');
+  window.scrollTo(0, 0);
+  document.body.style.overflow = 'hidden';
+  drawStatic(false, new Set());
+}
+
+// ============================================================
+// 사다리 생성 로직
+// ============================================================
+function build() {
+  const n = parts.length;
+
+  // 참여자 배치 순서 랜덤화 (다시 뽑기 시에도)
+  shuffle(parts);
+
+  // 1. 가로줄 랜덤 생성 (같은 행에서 인접 충돌 방지)
+  bars = [];
+  for (let r = 0; r < ROWS; r++) {
+    bars[r] = new Array(n - 1).fill(false);
+    for (let c = 0; c < n - 1; c++) {
+      if (!bars[r][c - 1]) bars[r][c] = Math.random() < BPROB;
+    }
+  }
+
+  // 2. 각 학생 경로 시뮬레이션
+  pathMaps = parts.map((_, i) => trace(i));
+
+  // 3. 당번 슬롯 결정 — 정확히 DUTY개 랜덤 선택
+  dutySlots = new Set();
+  shuffle([...Array(n).keys()]).slice(0, Math.min(DUTY, n))
+    .forEach(s => dutySlots.add(s));
+
+  // 당번 학생에게 무지개 색상 순서대로 배정
+  winnerColorMap = {};
+  let wIdx = 0;
+  for (let i = 0; i < parts.length; i++) {
+    if (dutySlots.has(pathMaps[i][ROWS])) {
+      winnerColorMap[i] = RAINBOW[wIdx % RAINBOW.length];
+      wIdx++;
+    }
+  }
+}
+
+// 학생 i(startCol)의 사다리 경로 추적 → 컬럼 배열 (길이 ROWS+1)
+function trace(startCol) {
+  const n = parts.length;
+  let c = startCol;
+  const path = [c];
+  for (let r = 0; r < ROWS; r++) {
+    if      (c < n-1 && bars[r][c])     c++;
+    else if (c > 0   && bars[r][c - 1]) c--;
+    path.push(c);
+  }
+  return path;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ============================================================
+// 레이아웃 & 좌표 변환 — 가로/세로 통합
+// ============================================================
+function isPortrait() { return window.innerWidth < 640; }
+
+function layout() {
+  const n  = parts.length;
+  const pt = isPortrait();
+  const w  = canvas.parentElement.clientWidth || (pt ? 390 : 960);
+  if (pt) {
+    const PAD_L = 70, PAD_R = 78, PAD_T = 18, PAD_B = 18;
+    const slotH = Math.max(30, Math.min(46, (window.innerHeight * 0.55) / n));
+    const rowW  = (w - PAD_L - PAD_R) / ROWS;
+    const h     = PAD_T + n * slotH + PAD_B;
+    return { n, w, h, pt, PAD_L, PAD_R, PAD_T, PAD_B, slotH, rowW };
+  } else {
+    const PAD_X = 54, TOP_Y = 66;
+    const lH   = Math.max(320, Math.min(500, window.innerHeight * 0.50));
+    const rowH = lH / ROWS;
+    const h    = TOP_Y + lH + 80;
+    return { n, w, h, pt, PAD_X, TOP_Y, rowH, lH };
+  }
+}
+
+// 흐름 축 좌표 (사다리 진행 방향: landscape=Y, portrait=X)
+function mainAxis(row, L) {
+  return L.pt ? L.PAD_L + row * L.rowW : L.TOP_Y + row * L.rowH;
+}
+
+// 슬롯 축 좌표 (학생 구분: landscape=X, portrait=Y)
+function crossAxis(col, L) {
+  const { n } = L;
+  if (L.pt) return L.PAD_T + (col + 0.5) * ((L.h - L.PAD_T - L.PAD_B) / n);
+  if (n <= 1) return L.w / 2;
+  return L.PAD_X + col * (L.w - L.PAD_X * 2) / (n - 1);
+}
+
+function toXY(col, row, L) {
+  const m = mainAxis(row, L), c = crossAxis(col, L);
+  return L.pt ? { x: m, y: c } : { x: c, y: m };
+}
+
+// ============================================================
+// 정적 사다리 그리기 — portrait/landscape 통합
+// ============================================================
+function drawStatic(showAll, revealedStudents) {
+  const L = layout();
+  const { n, w, h } = L;
+  canvas.width = w; canvas.height = h;
+  ctx.clearRect(0, 0, w, h);
+
+  const stepM = L.pt ? L.rowW : L.rowH;
+
+  // 메인 라인 (학생별 세로줄/가로줄)
+  ctx.strokeStyle = '#D1D5DB'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  for (let c = 0; c < n; c++) {
+    const p0 = toXY(c, 0, L), p1 = toXY(c, ROWS, L);
+    ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+  }
+
+  // 연결줄 (학생 간 가로줄/세로줄)
+  ctx.strokeStyle = '#9CA3AF'; ctx.lineWidth = 2.5;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < n - 1; c++) {
+      if (bars[r][c]) {
+        const midM = mainAxis(r, L) + stepM * 0.5;
+        const ca = crossAxis(c, L), cb = crossAxis(c + 1, L);
+        ctx.beginPath();
+        if (L.pt) { ctx.moveTo(midM, ca); ctx.lineTo(midM, cb); }
+        else      { ctx.moveTo(ca, midM); ctx.lineTo(cb, midM); }
+        ctx.stroke();
+      }
+    }
+  }
+
+  // 완료 경로 표시
+  if (showAll) {
+    for (let i = 0; i < n; i++) {
+      const isDuty = dutySlots.has(pathMaps[i][ROWS]);
+      drawFullPath(i, L, isDuty ? winnerColorMap[i] : '#CBD5E1', isDuty ? 4.5 : 1.5, isDuty ? 1 : 0.35);
+    }
+  }
+
+  // 이름 라벨 (시작점)
+  for (let i = 0; i < n; i++) {
+    const p = toXY(i, 0, L);
+    label(p.x, p.y, STUDENTS[parts[i]], false, L.pt ? 'left' : 'top');
+  }
+
+  // 결과 라벨 (도착점)
+  const openSlots = new Set();
+  if (revealedStudents == null) {
+    for (let s = 0; s < n; s++) openSlots.add(s);
+  } else {
+    for (const i of revealedStudents) openSlots.add(pathMaps[i][ROWS]);
+  }
+  for (let s = 0; s < n; s++) {
+    const p   = toXY(s, ROWS, L);
+    const txt = openSlots.has(s) ? (dutySlots.has(s) ? '청소 당번' : '다음 기회') : '?';
+    label(p.x, p.y, txt, openSlots.has(s) && dutySlots.has(s), L.pt ? 'right' : 'bottom');
+  }
+}
+
+// 경로 전체 선 그리기
+function drawFullPath(i, L, color, lw, alpha) {
+  const pts = pathPts(i, L);
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.globalAlpha = alpha; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k].x, pts[k].y);
+  ctx.stroke(); ctx.globalAlpha = 1;
+}
+
+// 경로 좌표 배열 — portrait/landscape 통합
+function pathPts(i, L) {
+  const path = pathMaps[i];
+  const stepM = L.pt ? L.rowW : L.rowH;
+  const pts = [toXY(path[0], 0, L)];
+  for (let r = 0; r < ROWS; r++) {
+    const curC = path[r], nxtC = path[r + 1];
+    const midM = mainAxis(r, L) + stepM * 0.5;
+    const ca   = crossAxis(curC, L);
+    const cb   = crossAxis(nxtC, L);
+    const endM = mainAxis(r + 1, L);
+    pts.push(L.pt ? { x: midM, y: ca } : { x: ca, y: midM });
+    if (curC !== nxtC) pts.push(L.pt ? { x: midM, y: cb } : { x: cb, y: midM });
+    pts.push(L.pt ? { x: endM, y: cb } : { x: cb, y: endM });
+  }
+  return pts;
+}
+
+// 라벨 — anchor: 'top' | 'bottom' | 'left' | 'right'
+function label(x, y, text, gold, anchor) {
+  const px = 8;
+  ctx.font = `bold 12px 'Apple SD Gothic Neo','Malgun Gothic',sans-serif`;
+  const tw = ctx.measureText(text).width;
+  const bw = tw + px * 2, bh = 22;
+  let bx, by;
+  if (anchor === 'top')    { bx = x - bw/2; by = y - bh - 4; }
+  if (anchor === 'bottom') { bx = x - bw/2; by = y + 4; }
+  if (anchor === 'left')   { bx = x - bw - 4; by = y - bh/2; }
+  if (anchor === 'right')  { bx = x + 4;       by = y - bh/2; }
+
+  ctx.fillStyle   = gold ? '#FEF3C7' : '#FFFFFF';
+  ctx.strokeStyle = gold ? '#F5A623' : '#E2E8F0';
+  ctx.lineWidth   = gold ? 2 : 1;
+  rr(bx, by, bw, bh, 5);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = gold ? '#92400E' : '#64748B';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, bx + bw/2, by + bh/2);
+}
+
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+// ============================================================
+// 즉시 결과 표시
+// ============================================================
+function showNow() {
+  if (animating) return;
+  drawStatic(true, null);
+  showResult();
+  lockBtns();
+}
+
+// ============================================================
+// 애니메이션 — 한 명씩 순서대로
+// ============================================================
+function runAnim() {
+  if (animating) return;
+  animating = true;
+  lockBtns();
+  document.getElementById('result').classList.remove('show');
+
+  const L = layout();
+  const { n } = L;
+  const allPts = pathMaps.map((_, i) => pathPts(i, L));
+  const revealed = new Set(); // 완료된 학생 인덱스
+  const ANIM_SPEED = 0.010;  // 속도 (낮을수록 느림)
+  const PAUSE_MS   = 700;    // 한 명 완료 후 다음 시작 전 대기
+
+  let cur  = 0; // 현재 애니메이션 중인 학생 인덱스
+  let prog = 0;
+
+  function tick() {
+    // 기본 사다리 + 이미 완료된 경로들
+    drawStatic(false, revealed);
+    for (const i of revealed) {
+      const isDuty = dutySlots.has(pathMaps[i][ROWS]);
+      drawFullPath(i, L, isDuty ? winnerColorMap[i] : '#CBD5E1', isDuty ? 4.5 : 1.5, isDuty ? 1 : 0.35);
+    }
+
+    // 당번 전원 이미 공개됐으면 속도 대폭 증가
+    const winnersFound = [...revealed].filter(i => dutySlots.has(pathMaps[i][ROWS])).length;
+    const speed = winnersFound >= DUTY ? 0.08 : ANIM_SPEED;
+
+    // 현재 학생 경로 애니메이션 — 진행 중엔 색 미공개
+    prog = Math.min(1, prog + speed);
+    animPath(allPts[cur], prog, '#64748B', 3);
+
+    if (prog < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      // 이 학생 완료 → 슬롯 공개
+      revealed.add(cur);
+      drawStatic(false, revealed);
+      for (const i of revealed) {
+        const d = dutySlots.has(pathMaps[i][ROWS]);
+        drawFullPath(i, L, d ? winnerColorMap[i] : '#CBD5E1', d ? 4.5 : 1.5, d ? 1 : 0.35);
+      }
+
+      cur++;
+      if (cur < n) {
+        prog = 0;
+        setTimeout(() => requestAnimationFrame(tick), PAUSE_MS);
+      } else {
+        // 전원 완료
+        animating = false;
+        setTimeout(() => {
+          drawStatic(true, null);
+          setTimeout(showResult, 300);
+        }, PAUSE_MS);
+      }
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// 경로 일부분 그리기 — 픽셀 거리 기반으로 속도 균등화
+function animPath(pts, t, color, lw) {
+  // 각 구간의 실제 픽셀 길이 계산
+  const dists = [0];
+  for (let k = 0; k < pts.length - 1; k++) {
+    const dx = pts[k+1].x - pts[k].x;
+    const dy = pts[k+1].y - pts[k].y;
+    dists.push(dists[k] + Math.sqrt(dx*dx + dy*dy));
+  }
+  const totalLen = dists[dists.length - 1];
+  const drawnLen = t * totalLen;
+
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.globalAlpha = 0.9; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+
+  for (let k = 0; k < pts.length - 1; k++) {
+    if (dists[k+1] <= drawnLen) {
+      ctx.lineTo(pts[k+1].x, pts[k+1].y);
+    } else if (dists[k] < drawnLen) {
+      const frac = (drawnLen - dists[k]) / (dists[k+1] - dists[k]);
+      const a = pts[k], b = pts[k+1];
+      ctx.lineTo(a.x + (b.x - a.x) * frac, a.y + (b.y - a.y) * frac);
+      break;
+    }
+  }
+  ctx.stroke(); ctx.globalAlpha = 1;
+}
+
+// ============================================================
+// 결과 패널
+// ============================================================
+function showResult() {
+  const winners = parts
+    .map((idx, i) => ({ name: STUDENTS[idx], color: winnerColorMap[i] }))
+    .filter(w => w.color);
+  const box = document.getElementById('wrow');
+  box.innerHTML = winners.map(w =>
+    `<div class="wc" style="border-color:${w.color};background:${w.color}18;color:${w.color}">🧹 ${w.name}</div>`
+  ).join('');
+  const result = document.getElementById('result');
+  result.style.display = 'block';
+  document.body.style.overflow = '';
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ============================================================
+// 버튼 제어
+// ============================================================
+function resetBtns() {
+  ['btn-anim','btn-now','btn-re'].forEach(id => {
+    document.getElementById(id).disabled = false;
+  });
+}
+function lockBtns() {
+  document.getElementById('btn-anim').disabled = true;
+  document.getElementById('btn-now').disabled  = true;
+}
+
+// 창 크기 변경 시 캔버스 재그리기
+window.addEventListener('resize', () => {
+  if (document.getElementById('s2').classList.contains('active')) {
+    const hasResult = document.getElementById('result').classList.contains('show');
+    drawStatic(hasResult, null);
+  }
+});
+
+// ── 시작 ──
+init();
+</script>
+</body>
+</html>
